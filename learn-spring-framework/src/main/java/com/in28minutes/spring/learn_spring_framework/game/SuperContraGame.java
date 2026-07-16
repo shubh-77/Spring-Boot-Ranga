@@ -1,8 +1,14 @@
 package com.in28minutes.spring.learn_spring_framework.game;
 
+import org.springframework.context.annotation.Primary;
+import org.springframework.stereotype.Component;
+
 /**
  * SuperContraGame
  */
+
+ @Component
+ @Primary
 public class SuperContraGame implements GamingConsole {
 
 

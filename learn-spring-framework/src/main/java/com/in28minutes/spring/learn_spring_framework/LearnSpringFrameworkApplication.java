@@ -7,6 +7,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 import com.in28minutes.spring.learn_spring_framework.game.GameRunner;
 import com.in28minutes.spring.learn_spring_framework.game.MarioGame;
 import com.in28minutes.spring.learn_spring_framework.game.SuperContraGame;
+import com.in28minutes.spring.learn_spring_framework.game.enterprise.example.web.MyWebController;
 import com.in28minutes.spring.learn_spring_framework.game.GamingConsole;
 
 
@@ -26,7 +27,12 @@ public class LearnSpringFrameworkApplication {
 
 		
 		runner.run();
+
+		System.out.println("\nWeb Controller class");
+		MyWebController webController= context.getBean(MyWebController.class);
 		
+		
+		System.out.println(webController.returnValueFromBusinessService());
 
 	}
 
