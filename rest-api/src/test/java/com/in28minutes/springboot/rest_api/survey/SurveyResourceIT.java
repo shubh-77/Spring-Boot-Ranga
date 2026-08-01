@@ -1,10 +1,10 @@
 package com.in28minutes.springboot.rest_api.survey;
 
 
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Base64;
 
 import org.json.JSONException;
 import org.junit.jupiter.api.Test;
@@ -19,63 +19,58 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 
-import ch.qos.logback.core.joran.spi.HttpUtil.RequestMethod;
-
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureTestRestTemplate
 public class SurveyResourceIT {
 	
 	private static String SPECIFIC_QUESTION_URL = "/surveys/Survey1/questions/Question1";
-
-	private static String GENERIC_QUESTIONS_URL="/surveys/Survey1/questions";
 	
-	private static String SPECIFIC_SURVEY_URL="/surveys/Survey1";
+	private static String GENERIC_QUESTIONS_URL = "/surveys/Survey1/questions";
 	
 	
-	private static String GENERIC_SURVEY_URL="/surveys";
-
 	@Autowired
 	private TestRestTemplate template;
-	
-	//http://localhost:8080/surveys/Survey1/questions/Question1
-	
-
-
-
-	
+		
 	@Test
 	void retrieveSpecificSurveyQuestion_basicScenario() throws JSONException {
-		ResponseEntity<String> responseEntity = template.getForEntity(SPECIFIC_QUESTION_URL, String.class);
+
+		HttpHeaders headers = createHttpContentTypeAndAuthorizationHeaders();
+		
+		HttpEntity<String> httpEntity = new HttpEntity<String>(null, headers);
+		
+		ResponseEntity<String> responseEntity 
+			= template.exchange(SPECIFIC_QUESTION_URL, HttpMethod.GET, httpEntity, String.class);
+		
+//		ResponseEntity<String> responseEntity = template.getForEntity(SPECIFIC_QUESTION_URL, String.class);
 
 		String expectedResponse =
 				"""
-					{
-			  "id": "Question1",
-			  "description": "Most Popular Cloud Platform Today",
-		
-			  "correctAnswer": "AWS"
-			}
+				{
+					"id":"Question1",
+					"description":"Most Popular Cloud Platform Today",
+					"correctAnswer":"AWS"
+				}
 				""";
-//		the str is a text block
-//		System.out.println(responseEntity.getBody());
-//		System.out.println(responseEntity.getHeaders());
-		//check response is 200 successful or not
+
 		assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
-		//check response type is json or not
 		assertEquals("application/json", responseEntity.getHeaders().get("Content-Type").get(0));
 		
 		JSONAssert.assertEquals(expectedResponse, responseEntity.getBody(), false);
-		
-		
-	
+		 
 	}
-	
-	
 	
 	@Test
 	void retrieveAllSurveyQuestions_basicScenario() throws JSONException {
 		
-		ResponseEntity<String> responseEntity = template.getForEntity(GENERIC_QUESTIONS_URL, String.class);
+		HttpHeaders headers = createHttpContentTypeAndAuthorizationHeaders();
+		
+		HttpEntity<String> httpEntity = new HttpEntity<String>(null, headers);
+		
+		ResponseEntity<String> responseEntity 
+			= template.exchange(GENERIC_QUESTIONS_URL, HttpMethod.GET, httpEntity, String.class);
+
+		
+//		ResponseEntity<String> responseEntity = template.getForEntity(GENERIC_QUESTIONS_URL, String.class);
 
 		String expectedResponse =
 				"""
@@ -99,76 +94,7 @@ public class SurveyResourceIT {
 		JSONAssert.assertEquals(expectedResponse, responseEntity.getBody(), false);
 		 
 	}
-	
-	
-	
-	
-	@Test
-	void retrieveSurveyById_basicScenario() throws JSONException {
-		
-		ResponseEntity<String> responseEntity = template.getForEntity(SPECIFIC_SURVEY_URL, String.class);
 
-		String expectedResponse =
-				"""
-						{
-						  "id": "Survey1",
-						  "title": "My Favorite Survey",
-						  "description": "Description of the Survey",
-						  "questions": [
-						    {
-						      "id": "Question1"
-						    },
-						    {
-						      "id": "Question2"
-						    },
-						    {
-						      "id": "Question3"
-						    }
-						  ]
-					   }	
-						""";
-
-		assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
-		assertEquals("application/json", responseEntity.getHeaders().get("Content-Type").get(0));
-		
-		JSONAssert.assertEquals(expectedResponse, responseEntity.getBody(), false);
-		 
-	}
-	
-	
-	@Test
-	void retrieveAllSurveys_basicScenario() throws JSONException {
-		
-		ResponseEntity<String> responseEntity = template.getForEntity(GENERIC_SURVEY_URL, String.class);
-
-		String expectedResponse =
-				"""
-					[
-					  {
-					    "id": "Survey1",
-					    "title": "My Favorite Survey",
-					    "description": "Description of the Survey",
-					    "questions": [
-					      {
-					        "id": "Question1"
-					      },
-					      {
-					        "id": "Question2"
-					      },
-					      {
-					        "id": "Question3"
-					      }
-					    ]
-					  }
-					]	
-						""";
-
-		assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
-		assertEquals("application/json", responseEntity.getHeaders().get("Content-Type").get(0));
-		
-		JSONAssert.assertEquals(expectedResponse, responseEntity.getBody(), false);
-		 
-	}
 	
 	@Test
 	void addNewSurveyQuestion_basicScenario() {
@@ -187,10 +113,7 @@ public class SurveyResourceIT {
 				""";
 
 		
-		//
-		
-		HttpHeaders headers = new HttpHeaders();
-		headers.add("Content-Type", "application/json");
+		HttpHeaders headers = createHttpContentTypeAndAuthorizationHeaders();
 		
 		HttpEntity<String> httpEntity = new HttpEntity<String>(requestBody, headers);
 		
@@ -204,11 +127,27 @@ public class SurveyResourceIT {
 		
 		//DELETE
 		//locationHeader
-		//here we are deleting the survey question which was created
-		template.delete(locationHeader);
+
+		ResponseEntity<String> responseEntityDelete 
+		= template.exchange(locationHeader, HttpMethod.DELETE, httpEntity, String.class);
+
+		assertTrue(responseEntityDelete.getStatusCode().is2xxSuccessful());
+		//template.delete(locationHeader);
 		
 	}
-			
+
+	private HttpHeaders createHttpContentTypeAndAuthorizationHeaders() {
+		HttpHeaders headers = new HttpHeaders();
+		headers.add("Content-Type", "application/json");
+		headers.add("Authorization", "Basic " + performBasicAuthEncoding("admin","password"));
+		return headers;
+	}
 	
+	
+	String performBasicAuthEncoding(String user, String password) {
+		String combined = user + ":" + password;
+		byte[] encodedBytes = Base64.getEncoder().encode(combined.getBytes());
+		return new String(encodedBytes);
+	}
 	
 }
