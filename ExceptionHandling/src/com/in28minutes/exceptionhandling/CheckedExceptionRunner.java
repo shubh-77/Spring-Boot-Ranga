@@ -5,7 +5,7 @@ public static void main(String[] args) {
 	
 	try {
 		someOtherMethod();
-		Thread.sleep(1000);
+		Thread.sleep(2000);
 	} catch (InterruptedException e) {
 		// TODO Auto-generated catch block
 		e.printStackTrace();
